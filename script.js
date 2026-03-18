@@ -5,6 +5,17 @@ const API_ENDPOINT = localStorage.getItem('apiEndpoint') || 'http://localhost:80
 const STORAGE_KEY_HISTORY = 'dashboardHistory';
 const STORAGE_KEY_SETTINGS = 'dashboardSettings';
 
+// Voice Recognition Setup
+const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+const speechRecognition = SpeechRecognition ? new SpeechRecognition() : null;
+let isListening = false;
+
+if (speechRecognition) {
+    speechRecognition.continuous = false;
+    speechRecognition.interimResults = true;
+    speechRecognition.lang = 'en-US';
+}
+
 // ============================================
 // STATE MANAGEMENT
 // ============================================
@@ -68,6 +79,78 @@ function initializeEventListeners() {
             }
         });
     }
+
+    // GPT-Style Search Input
+    const gptSearchInput = document.getElementById('gptSearchInput');
+    if (gptSearchInput) {
+        // Auto-expand textarea
+        gptSearchInput.addEventListener('input', (e) => {
+            e.target.style.height = 'auto';
+            e.target.style.height = Math.min(e.target.scrollHeight, 100) + 'px';
+        });
+
+        // Submit on Ctrl+Enter
+        gptSearchInput.addEventListener('keydown', (e) => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                submitGPTQuery();
+            }
+        });
+    }
+
+    // Voice Button
+    const voiceBtn = document.getElementById('voiceBtn');
+    if (voiceBtn) {
+        voiceBtn.addEventListener('click', toggleVoiceInput);
+    }
+
+    // Send Button
+    const sendBtn = document.getElementById('sendBtn');
+    if (sendBtn) {
+        sendBtn.addEventListener('click', submitGPTQuery);
+    }
+
+    // Voice Recognition Events
+    if (speechRecognition) {
+        speechRecognition.onstart = () => {
+            isListening = true;
+            const voiceBtn = document.getElementById('voiceBtn');
+            if (voiceBtn) {
+                voiceBtn.classList.add('listening');
+            }
+        };
+
+        speechRecognition.onresult = (event) => {
+            let interimTranscript = '';
+            for (let i = event.resultIndex; i < event.results.length; i++) {
+                const transcript = event.results[i][0].transcript;
+                if (event.results[i].isFinal) {
+                    const gptSearchInput = document.getElementById('gptSearchInput');
+                    if (gptSearchInput) {
+                        gptSearchInput.value += transcript + ' ';
+                    }
+                } else {
+                    interimTranscript += transcript;
+                }
+            }
+        };
+
+        speechRecognition.onerror = (event) => {
+            console.error('Speech recognition error:', event.error);
+            showToast(`Voice input error: ${event.error}`, 'error');
+            const voiceBtn = document.getElementById('voiceBtn');
+            if (voiceBtn) {
+                voiceBtn.classList.remove('listening');
+            }
+        };
+
+        speechRecognition.onend = () => {
+            isListening = false;
+            const voiceBtn = document.getElementById('voiceBtn');
+            if (voiceBtn) {
+                voiceBtn.classList.remove('listening');
+            }
+        };
+    }
 }
 
 // ============================================
@@ -115,6 +198,107 @@ function switchTab(tabName) {
 // ============================================
 // QUERY BUILDER
 // ============================================
+
+// Voice Input Toggle
+function toggleVoiceInput() {
+    if (!speechRecognition) {
+        showToast('Voice input is not supported in your browser', 'error');
+        return;
+    }
+
+    if (isListening) {
+        speechRecognition.stop();
+        isListening = false;
+    } else {
+        try {
+            speechRecognition.start();
+        } catch (e) {
+            console.error('Voice recognition error:', e);
+            showToast('Failed to start voice input', 'error');
+        }
+    }
+}
+
+// GPT-Style Search Query
+async function submitGPTQuery() {
+    const gptSearchInput = document.getElementById('gptSearchInput');
+    currentQuery = gptSearchInput.value.trim();
+
+    if (!currentQuery) {
+        showToast('Please enter a question or use voice input', 'error');
+        return;
+    }
+
+    // Show loading state
+    const resultsArea = document.getElementById('resultsArea');
+    const loadingState = document.getElementById('loadingState');
+    const chartsContainer = document.getElementById('chartsContainer');
+    const tableContainer = document.getElementById('tableContainer');
+    const insightsContainer = document.getElementById('insightsContainer');
+    const errorState = document.getElementById('errorState');
+
+    resultsArea.style.display = 'block';
+    loadingState.style.display = 'flex';
+    chartsContainer.style.display = 'none';
+    tableContainer.style.display = 'none';
+    insightsContainer.style.display = 'none';
+    errorState.style.display = 'none';
+
+    try {
+        const payload = {
+            query: currentQuery,
+            limit: 100
+        };
+
+        const response = await fetch(`${API_ENDPOINT}/api/dashboard/generate`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(payload)
+        });
+
+        if (!response.ok) {
+            throw new Error(`API Error: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        // Hide loading, show results
+        loadingState.style.display = 'none';
+
+        // Add to history
+        addToHistory(currentQuery);
+
+        // Display charts
+        if (data.charts && data.charts.length > 0) {
+            displayCharts(data.charts);
+            chartsContainer.style.display = 'grid';
+        }
+
+        // Display data table
+        if (data.data && data.data.length > 0) {
+            displayTable(data.data);
+            tableContainer.style.display = 'block';
+        }
+
+        // Display insights
+        if (data.insights && data.insights.length > 0) {
+            displayInsights(data.insights);
+            insightsContainer.style.display = 'block';
+        }
+
+        showToast('Dashboard generated successfully!', 'success');
+
+    } catch (error) {
+        console.error('Query Error:', error);
+        loadingState.style.display = 'none';
+        errorState.style.display = 'flex';
+        document.getElementById('errorMessage').textContent = error.message || 'Failed to generate dashboard';
+        showToast('Error generating dashboard', 'error');
+    }
+}
+
 function setQuery(query) {
     document.getElementById('queryInput').value = query;
     switchTab('query');
