@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BI Dashboard - Business Intelligence</title>
+    <link rel="stylesheet" href="style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <!-- Sidebar Navigation -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <span class="logo-icon">📊</span>
+                <span class="logo-text">BI Dashboard</span>
+            </div>
+        </div>
+        
+        <nav class="sidebar-nav">
+            <a href="#" class="nav-item active" data-tab="dashboard">
+                <span class="nav-icon">🏠</span>
+                <span class="nav-label">Dashboard</span>
+            </a>
+            <a href="#" class="nav-item" data-tab="query">
+                <span class="nav-icon">🔍</span>
+                <span class="nav-label">Query Builder</span>
+            </a>
+            <a href="#" class="nav-item" data-tab="history">
+                <span class="nav-icon">⏱️</span>
+                <span class="nav-label">History</span>
+            </a>
+            <a href="#" class="nav-item" data-tab="settings">
+                <span class="nav-icon">⚙️</span>
+                <span class="nav-label">Settings</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="status-indicator online"></div>
+            <span class="status-text">API Connected</span>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Header -->
+        <header class="top-header">
+            <div class="header-left">
+                <button class="menu-toggle" id="menuToggle">☰</button>
+                <h1 class="page-title">Dashboard</h1>
+            </div>
+            <div class="header-right">
+                <div class="search-box">
+                    <input type="text" placeholder="Search..." class="search-input">
+                    <span class="search-icon">🔍</span>
+                </div>
+                <button class="notification-btn">
+                    🔔
+                    <span class="notification-badge">3</span>
+                </button>
+                <div class="user-menu">
+                    <img src="https://via.placeholder.com/40" alt="User" class="user-avatar">
+                    <span class="user-name">Admin</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Panel -->
+        <div class="panel">
+            <!-- Dashboard Tab -->
+            <section id="dashboard" class="tab-content active">
+                <div class="welcome-section">
+                    <h2>Welcome to BI Dashboard</h2>
+                    <p>Transform your data into actionable insights using AI-powered natural language queries</p>
+                </div>
+
+                <!-- Get Started Section -->
+                <div class="get-started">
+                    <div class="feature-card">
+                        <div class="feature-icon">💬</div>
+                        <h3>Natural Language Queries</h3>
+                        <p>Ask questions in plain English, we'll handle the SQL</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">📈</div>
+                        <h3>Smart Visualizations</h3>
+                        <p>Automatic chart recommendations for your data</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">⚡</div>
+                        <h3>Real-time Insights</h3>
+                        <p>Get instant analysis and business summaries</p>
+                    </div>
+                    <div class="feature-card">
+                        <div class="feature-icon">🔄</div>
+                        <h3>Interactive Dashboards</h3>
+                        <p>Follow-ups and drill-down into your data</p>
+                    </div>
+                </div>
+
+                <div class="quick-start">
+                    <h3>Quick Start</h3>
+                    <p>Try asking something like:</p>
+                    <div class="example-queries">
+                        <button class="example-btn" onclick="setQuery('Show me the total sales revenue by month')">
+                            Show me the total sales revenue by month
+                        </button>
+                        <button class="example-btn" onclick="setQuery('What are the top 5 products by revenue?')">
+                            What are the top 5 products by revenue?
+                        </button>
+                        <button class="example-btn" onclick="setQuery('Compare Q3 and Q4 performance')">
+                            Compare Q3 and Q4 performance
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Recent Dashboards -->
+                <div class="recent-section">
+                    <h3>Recent Queries</h3>
+                    <div class="recent-list" id="recentList">
+                        <div class="empty-state">
+                            <span class="empty-icon">📭</span>
+                            <p>No recent queries yet. Start by asking a question!</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Query Builder Tab -->
+            <section id="query" class="tab-content">
+                <div class="query-container">
+                    <h2>Create Dashboard Query</h2>
+                    
+                    <!-- GPT-Style Search Bar -->
+                    <div class="gpt-search-container">
+                        <div class="gpt-search-box">
+                            <input 
+                                type="text" 
+                                id="gptSearchInput" 
+                                class="gpt-input" 
+                                placeholder="Ask anything about your data... (e.g., 'Show me revenue by category' or 'Which region has highest sales?')"
+                                autocomplete="off">
+                            <div class="gpt-input-actions">
+                                <button class="voice-btn" id="voiceBtn" title="Click to speak">
+                                    <span class="voice-icon">🎤</span>
+                                </button>
+                                <button class="send-btn" id="sendBtn" onclick="submitGPTQuery()" title="Send query">
+                                    <span class="send-icon">▶</span>
+                                </button>
+                            </div>
+                        </div>
+                        <p class="gpt-hint">💡 Tip: Use natural language. Try "Revenue by region", "Top products", or "Discount impact"</p>
+                    </div>
+
+                    <!-- Original Query Builder (kept for compatibility) -->
+                    <div class="query-builder">
+                        <!-- Query Input -->
+                        <div class="query-input-section">
+                            <label for="queryInput">Advanced Query (Optional):</label>
+                            <div class="input-group">
+                                <textarea 
+                                    id="queryInput" 
+                                    class="query-input" 
+                                    placeholder="Or write your own query here..."
+                                    rows="3"></textarea>
+                                <div class="input-actions">
+                                    <button class="btn-clear" onclick="clearQuery()">Clear</button>
+                                    <button class="btn-example" onclick="fillExample()">Example</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Options -->
+                        <div class="options-grid">
+                            <div class="option-group">
+                                <label for="dataSource">Data Source:</label>
+                                <select id="dataSource" class="option-select">
+                                    <option value="">All Tables</option>
+                                    <option value="sales">Sales Data</option>
+                                    <option value="customers">Customers</option>
+                                    <option value="products">Products</option>
+                                </select>
+                            </div>
+
+                            <div class="option-group">
+                                <label for="regionFilter">Region:</label>
+                                <select id="regionFilter" class="option-select">
+                                    <option value="">All Regions</option>
+                                    <option value="North America">North America</option>
+                                    <option value="Asia">Asia</option>
+                                    <option value="Europe">Europe</option>
+                                    <option value="Middle East">Middle East</option>
+                                </select>
+                            </div>
+
+                            <div class="option-group">
+                                <label for="rowLimit">Row Limit:</label>
+                                <input type="number" id="rowLimit" class="option-input" value="100" min="1" max="10000">
+                            </div>
+
+                            <div class="option-group">
+                                <label for="filterInput">Additional Filters:</label>
+                                <input type="text" id="filterInput" class="option-input" placeholder="e.g., product_category=Books">
+                            </div>
+                        </div>
+
+                        <!-- Submit Button -->
+                        <button class="btn-submit" onclick="submitQuery()">
+                            <span class="btn-icon">🚀</span>
+                            Generate Dashboard
+                        </button>
+                    </div>
+
+                    <!-- Results Area -->
+                    <div id="resultsArea" class="results-area" style="display: none;">
+                        <div class="results-header">
+                            <h3>Results</h3>
+                            <button class="btn-close" onclick="closeResults()">✕</button>
+                        </div>
+
+                        <!-- Loading State -->
+                        <div id="loadingState" class="loading-state">
+                            <div class="spinner"></div>
+                            <p>Processing your query...</p>
+                        </div>
+
+                        <!-- Charts Container -->
+                        <div id="chartsContainer" class="charts-container" style="display: none;">
+                            <!-- Charts will be dynamically added here -->
+                        </div>
+
+                        <!-- Data Table -->
+                        <div id="tableContainer" class="table-container" style="display: none;">
+                            <h4>Data Table</h4>
+                            <div class="table-wrapper">
+                                <table id="dataTable" class="data-table">
+                                    <thead></thead>
+                                    <tbody></tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Insights -->
+                        <div id="insightsContainer" class="insights-container" style="display: none;">
+                            <h4>💡 Key Insights</h4>
+                            <div id="insightsList" class="insights-list"></div>
+                        </div>
+
+                        <!-- Error State -->
+                        <div id="errorState" class="error-state" style="display: none;">
+                            <span class="error-icon">⚠️</span>
+                            <p id="errorMessage"></p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- History Tab -->
+            <section id="history" class="tab-content">
+                <div class="history-container">
+                    <h2>Query History</h2>
+                    <div id="historyList" class="history-list">
+                        <div class="empty-state">
+                            <span class="empty-icon">📭</span>
+                            <p>No query history yet</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Settings Tab -->
+            <section id="settings" class="tab-content">
+                <div class="settings-container">
+                    <h2>Settings</h2>
+                    
+                    <div class="settings-section">
+                        <h3>Database Configuration</h3>
+                        <div class="setting-item">
+                            <label>Database Type:</label>
+                            <select id="dbType" class="option-select">
+                                <option>SQLite</option>
+                                <option>PostgreSQL</option>
+                                <option>CSV</option>
+                            </select>
+                        </div>
+                        <div class="setting-item">
+                            <label>Database URL:</label>
+                            <input type="text" class="option-input" value="sqlite:///./bi_dashboard.db">
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <h3>API Configuration</h3>
+                        <div class="setting-item">
+                            <label>API Endpoint:</label>
+                            <input type="text" id="apiEndpoint" class="option-input" value="http://localhost:8000">
+                        </div>
+                        <div class="setting-item">
+                            <label>API Status:</label>
+                            <div class="api-status">
+                                <div class="status-indicator online"></div>
+                                <span>Connected</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="settings-section">
+                        <h3>Display Settings</h3>
+                        <div class="setting-item">
+                            <label>Theme:</label>
+                            <select id="themeSelect" class="option-select">
+                                <option value="light">Light</option>
+                                <option value="dark">Dark</option>
+                                <option value="auto">Auto (System)</option>
+                            </select>
+                        </div>
+                        <div class="setting-item">
+                            <label>
+                                <input type="checkbox" id="autoRefresh">
+                                Enable Auto-refresh
+                            </label>
+                        </div>
+                    </div>
+
+                    <button class="btn-submit" onclick="saveSettings()">Save Settings</button>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Notification Toast -->
+    <div id="toast" class="toast"></div>
+
+    <!-- Modal -->
+    <div id="modal" class="modal" style="display: none;">
+        <div class="modal-content">
+            <button class="modal-close" onclick="closeModal()">✕</button>
+            <h3 id="modalTitle"></h3>
+            <p id="modalBody"></p>
+            <button class="btn-submit" onclick="closeModal()">Close</button>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
