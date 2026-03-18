@@ -12,7 +12,7 @@ class LLMService:
     def __init__(self):
         """Initialize Gemini API with credentials."""
         genai.configure(api_key=settings.gemini_api_key)
-        self.model = genai.GenerativeModel('gemini-pro')
+        self.model = genai.GenerativeModel('gemini-2.0-flash')
     
     def parse_natural_language_query(self, 
                                     query: str, 
