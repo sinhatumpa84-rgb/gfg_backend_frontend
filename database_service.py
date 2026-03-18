@@ -5,6 +5,7 @@ from typing import List, Dict, Any, Optional
 import sqlite3
 import logging
 import os
+from pathlib import Path
 from config import settings
 from models import DataSourceInfo
 
@@ -37,75 +38,69 @@ class DatabaseService:
             raise
     
     def _init_sqlite_tables(self):
-        """Initialize sample tables in SQLite for demo purposes."""
+        """Initialize e-commerce sales tables in SQLite from CSV data."""
         try:
-            conn = sqlite3.connect(settings.database_url.replace("sqlite:///", ""))
+            db_path = settings.database_url.replace("sqlite:///", "")
+            conn = sqlite3.connect(db_path)
             cursor = conn.cursor()
             
             # Check if tables already exist
             cursor.execute("SELECT name FROM sqlite_master WHERE type='table';")
-            existing_tables = cursor.fetchall()
+            existing_tables = [table[0] for table in cursor.fetchall()]
             
-            if not existing_tables:
-                # Create sample tables for demonstration
-                # Sales data table
+            # Create sales table if it doesn't exist
+            if 'sales' not in existing_tables:
                 cursor.execute("""
                     CREATE TABLE IF NOT EXISTS sales (
-                        id INTEGER PRIMARY KEY,
-                        date TEXT,
-                        region TEXT,
-                        product_category TEXT,
-                        product_name TEXT,
-                        revenue REAL,
-                        quantity INTEGER,
-                        salesperson TEXT
+                        order_id INTEGER PRIMARY KEY,
+                        order_date TEXT NOT NULL,
+                        product_id INTEGER NOT NULL,
+                        product_category TEXT NOT NULL,
+                        price REAL NOT NULL,
+                        discount_percent INTEGER NOT NULL,
+                        quantity_sold INTEGER NOT NULL,
+                        customer_region TEXT NOT NULL,
+                        payment_method TEXT NOT NULL,
+                        rating REAL NOT NULL,
+                        review_count INTEGER NOT NULL,
+                        discounted_price REAL NOT NULL,
+                        total_revenue REAL NOT NULL
                     )
                 """)
                 
-                # Insert sample data
-                sample_sales_data = [
-                    ('2024-01-01', 'North', 'Electronics', 'Laptop', 5000, 2, 'John'),
-                    ('2024-01-02', 'South', 'Furniture', 'Desk', 800, 1, 'Sarah'),
-                    ('2024-01-03', 'East', 'Electronics', 'Phone', 1200, 3, 'Mike'),
-                    ('2024-01-04', 'West', 'Clothing', 'Shirt', 50, 5, 'Emma'),
-                    ('2024-01-05', 'North', 'Electronics', 'Tablet', 2000, 1, 'John'),
-                    ('2024-02-01', 'South', 'Electronics', 'Laptop', 5000, 1, 'Sarah'),
-                    ('2024-02-02', 'East', 'Furniture', 'Chair', 500, 4, 'Mike'),
-                    ('2024-02-03', 'West', 'Electronics', 'Monitor', 600, 2, 'Emma'),
-                    ('2024-03-01', 'North', 'Clothing', 'Jacket', 150, 2, 'John'),
-                    ('2024-03-02', 'South', 'Furniture', 'Table', 1500, 1, 'Sarah'),
+                # Try to load from CSV if available
+                base_path = Path(__file__).parent.parent / "database"
+                possible_files = [
+                    base_path / "amazon_sales_clean.csv",
+                    base_path / "amazon sales.csv",
+                    base_path / "sales_data.csv"
                 ]
                 
-                cursor.executemany(
-                    "INSERT INTO sales VALUES (NULL, ?, ?, ?, ?, ?, ?, ?)",
-                    sample_sales_data
-                )
+                csv_path = None
+                for path in possible_files:
+                    if path.exists():
+                        csv_path = path
+                        break
                 
-                # Employees table
-                cursor.execute("""
-                    CREATE TABLE IF NOT EXISTS employees (
-                        id INTEGER PRIMARY KEY,
-                        name TEXT,
-                        department TEXT,
-                        salary REAL,
-                        hire_date TEXT
-                    )
-                """)
-                
-                sample_employees_data = [
-                    ('John', 'Sales', 50000, '2020-01-15'),
-                    ('Sarah', 'Sales', 55000, '2019-06-01'),
-                    ('Mike', 'Sales', 52000, '2021-03-10'),
-                    ('Emma', 'Sales', 48000, '2022-01-20'),
-                ]
-                
-                cursor.executemany(
-                    "INSERT INTO employees VALUES (NULL, ?, ?, ?, ?)",
-                    sample_employees_data
-                )
+                if csv_path:
+                    logger.info(f"Loading e-commerce data from {csv_path}")
+                    df = pd.read_csv(csv_path)
+                    df.to_sql('sales', conn, if_exists='append', index=False)
+                    logger.info(f"Loaded {len(df)} e-commerce transactions")
+                else:
+                    logger.warning(f"CSV file not found. Tried: {possible_files}")
                 
                 conn.commit()
-                logger.info("Sample data initialized in SQLite")
+                logger.info("Sales table created and populated")
+            else:
+                logger.info("Sales table already exists")
+            
+            cursor.close()
+            conn.close()
+            logger.info("SQLite tables initialized successfully")
+        except Exception as e:
+            logger.error(f"Failed to initialize SQLite tables: {e}")
+            raise
             
             conn.close()
         except Exception as e:
