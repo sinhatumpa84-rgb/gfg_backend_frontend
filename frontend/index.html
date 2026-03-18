@@ -132,15 +132,37 @@
                 <div class="query-container">
                     <h2>Create Dashboard Query</h2>
                     
+                    <!-- GPT-Style Search Bar -->
+                    <div class="gpt-search-container">
+                        <div class="gpt-search-box">
+                            <input 
+                                type="text" 
+                                id="gptSearchInput" 
+                                class="gpt-input" 
+                                placeholder="Ask anything about your data... (e.g., 'Show me revenue by category' or 'Which region has highest sales?')"
+                                autocomplete="off">
+                            <div class="gpt-input-actions">
+                                <button class="voice-btn" id="voiceBtn" title="Click to speak">
+                                    <span class="voice-icon">🎤</span>
+                                </button>
+                                <button class="send-btn" id="sendBtn" onclick="submitGPTQuery()" title="Send query">
+                                    <span class="send-icon">▶</span>
+                                </button>
+                            </div>
+                        </div>
+                        <p class="gpt-hint">💡 Tip: Use natural language. Try "Revenue by region", "Top products", or "Discount impact"</p>
+                    </div>
+
+                    <!-- Original Query Builder (kept for compatibility) -->
                     <div class="query-builder">
                         <!-- Query Input -->
                         <div class="query-input-section">
-                            <label for="queryInput">Your Question:</label>
+                            <label for="queryInput">Advanced Query (Optional):</label>
                             <div class="input-group">
                                 <textarea 
                                     id="queryInput" 
                                     class="query-input" 
-                                    placeholder="Ask anything about your data... e.g., 'Show me sales by region for Q3'"
+                                    placeholder="Or write your own query here..."
                                     rows="3"></textarea>
                                 <div class="input-actions">
                                     <button class="btn-clear" onclick="clearQuery()">Clear</button>
@@ -162,13 +184,24 @@
                             </div>
 
                             <div class="option-group">
+                                <label for="regionFilter">Region:</label>
+                                <select id="regionFilter" class="option-select">
+                                    <option value="">All Regions</option>
+                                    <option value="North America">North America</option>
+                                    <option value="Asia">Asia</option>
+                                    <option value="Europe">Europe</option>
+                                    <option value="Middle East">Middle East</option>
+                                </select>
+                            </div>
+
+                            <div class="option-group">
                                 <label for="rowLimit">Row Limit:</label>
                                 <input type="number" id="rowLimit" class="option-input" value="100" min="1" max="10000">
                             </div>
 
                             <div class="option-group">
-                                <label for="filterInput">Filters:</label>
-                                <input type="text" id="filterInput" class="option-input" placeholder="e.g., region=East">
+                                <label for="filterInput">Additional Filters:</label>
+                                <input type="text" id="filterInput" class="option-input" placeholder="e.g., product_category=Books">
                             </div>
                         </div>
 
